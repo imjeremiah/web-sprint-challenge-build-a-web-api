@@ -23,7 +23,7 @@ router.post('/', validateAction, (req, res, next) => {
         .catcn(next)
 });
 
-router.put('/:id', validateActionId, validateAction, (req,res, next) => {
+router.put('/:id', validateActionId, validateAction, (req, res, next) => {
     Action.update(req.params.id, req.body)
         .then(action => res.json(action))
         .catch(next)

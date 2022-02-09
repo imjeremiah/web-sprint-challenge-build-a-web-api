@@ -1,17 +1,38 @@
 // add middlewares here related to actions
 const Action = require('../actions/actions-model');
+const yup = require('yup');
 
-function validateActionId(req, res, next) {
-    const { id } = req.params;
-    Action.get(id)
-        .then(possibleAction => {
-            possibleAction ? (req.action = possibleAction, next()) : res.status(404).json({ message: "action not found" });
-        })
-        .catch(next);
+async function validateActionId(req, res, next) {
+    const action = await Action.get(req.params.id);
+    if (!action) {
+        res.status(404).json({
+            message: "no action found",
+        });
+    } else {
+        req.action = action;
+        next();
+    }
 }
 
-function validateAction(req, res, next) {
-    (req.body.project_id && req.body.notes && req.body.description) ? next() : res.status(400).json({ message: "project_id, name, and description are required fields" });
+const actionSchema = yup.object({
+    project_id: yup.number().required(),
+    description: yup.string().trim().max(128).required(),
+    notes: yup.string().trim().required(),
+    completed: yup.bool(),
+});
+
+async function validateAction(req, res, next) {
+    try {
+        const validatedAction = await actionSchema.validate(req.body, {
+            stripUnknown: true,
+        });
+        req.body = validatedAction;
+        next();
+    } catch (err) {
+        res.status(400).json({
+            message: "project id, description, and notes fields required"
+        });
+    }
 }
 
 module.exports = { validateActionId, validateAction }
